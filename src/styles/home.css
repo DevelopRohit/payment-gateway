@@ -1,0 +1,141 @@
+.home-header {
+    text-align: center;
+    margin-bottom: 50px;
+    padding: 40px 20px;
+}
+
+@media (max-width: 768px) {
+    .home-header {
+        margin-bottom: 35px;
+        padding: 30px 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-header {
+        margin-bottom: 25px;
+        padding: 20px 10px;
+    }
+}
+
+.home-header h1 {
+    font-size: 3.5rem;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-shadow: none;
+    margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .home-header h1 {
+        font-size: 2.2rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .home-header h1 {
+        font-size: 1.8rem;
+        margin-bottom: 10px;
+    }
+}
+
+.subtitle {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 1.3rem;
+    font-weight: 500;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+@media (max-width: 768px) {
+    .subtitle {
+        font-size: 1.1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .subtitle {
+        font-size: 0.95rem;
+    }
+}
+
+.feature-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start;
+    padding: 40px 25px !important;
+}
+
+@media (max-width: 768px) {
+    .feature-card {
+        padding: 25px 15px !important;
+    }
+}
+
+@media (max-width: 480px) {
+    .feature-card {
+        padding: 15px 10px !important;
+    }
+}
+
+.card-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+@media (max-width: 768px) {
+    .card-icon {
+        font-size: 2.5rem;
+        margin-bottom: 12px;
+    }
+}
+
+@media (max-width: 480px) {
+    .card-icon {
+        font-size: 2rem;
+        margin-bottom: 10px;
+    }
+}
+
+.feature-card h3 {
+    color: #667eea;
+    margin: 15px 0 10px 0;
+    font-size: 1.3rem;
+}
+
+@media (max-width: 768px) {
+    .feature-card h3 {
+        font-size: 1.1rem;
+        margin: 12px 0 8px 0;
+    }
+}
+
+@media (max-width: 480px) {
+    .feature-card h3 {
+        font-size: 1rem;
+        margin: 10px 0 6px 0;
+    }
+}
+
+.feature-card p {
+    color: #999;
+    font-size: 0.9rem;
+    text-align: center;
+    line-height: 1.4;
+    margin: 0;
+}
+
+@media (max-width: 768px) {
+    .feature-card p {
+        font-size: 0.85rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .feature-card p {
+        font-size: 0.8rem;
+        line-height: 1.3;
+    }
+}

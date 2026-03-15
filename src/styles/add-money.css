@@ -1,0 +1,374 @@
+/* Add Money Page Styles */
+.add-money-container {
+    max-width: 900px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .add-money-container {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        padding: 15px;
+    }
+}
+
+@media (max-width: 480px) {
+    .add-money-container {
+        gap: 15px;
+        padding: 10px;
+    }
+}
+
+/* Add Money Card */
+.add-money-card {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 25px;
+}
+
+@media (max-width: 768px) {
+    .add-money-card {
+        padding: 25px;
+        gap: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .add-money-card {
+        padding: 15px;
+        border-radius: 15px;
+        gap: 15px;
+    }
+}
+
+/* Current Balance Section */
+.current-balance {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    padding: 25px;
+    border-radius: 15px;
+    text-align: center;
+}
+
+.balance-label {
+    font-size: 0.95rem;
+    opacity: 0.9;
+    margin: 0 0 10px 0;
+    font-weight: 500;
+}
+
+.balance-display {
+    font-size: 2.8rem;
+    font-weight: bold;
+    letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+    .balance-display {
+        font-size: 2.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .current-balance {
+        padding: 20px;
+    }
+
+    .balance-display {
+        font-size: 2rem;
+    }
+}
+
+/* Quick Amount Selection */
+.quick-amounts {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.quick-label {
+    color: #667eea;
+    font-weight: 600;
+    margin: 0;
+    font-size: 0.95rem;
+}
+
+.quick-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .quick-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-buttons {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+    }
+}
+
+.quick-btn {
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    color: #333;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.95rem;
+}
+
+.quick-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-2px);
+}
+
+.quick-btn.active {
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+}
+
+/* Form Styles */
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    color: #333;
+    font-weight: 600;
+    font-size: 0.95rem;
+}
+
+.form-group input {
+    padding: 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    font-family: inherit;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+/* Error Text */
+.error-text {
+    color: #f44336;
+    font-size: 0.85rem;
+    margin-top: -5px;
+}
+
+/* Amount Info */
+.amount-info {
+    background: #f9f9f9;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #667eea;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    color: #666;
+    font-size: 0.95rem;
+}
+
+.amount-value,
+.fee-value {
+    font-weight: 600;
+    color: #333;
+}
+
+.fee-value {
+    color: #4caf50;
+}
+
+.info-row.total {
+    border-top: 2px solid #e0e0e0;
+    padding-top: 12px;
+    margin-top: 8px;
+    font-weight: 600;
+    color: #667eea;
+}
+
+.final-amount {
+    color: #764ba2;
+    font-size: 1.1rem;
+    font-weight: bold;
+}
+
+/* Add Money Button */
+.add-money-btn {
+    padding: 15px 30px;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    width: 100%;
+}
+
+.add-money-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.6);
+}
+
+.add-money-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+@media (max-width: 480px) {
+    .add-money-btn {
+        padding: 12px 20px;
+        font-size: 1rem;
+    }
+}
+
+/* Info Box */
+.info-box {
+    background: #e8f5e9;
+    padding: 20px;
+    border-radius: 12px;
+    border-left: 4px solid #4caf50;
+}
+
+.info-icon {
+    margin: 0 0 12px 0;
+    font-size: 1.5rem;
+}
+
+.info-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.info-list li {
+    padding: 6px 0;
+    color: #2e7d32;
+    font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.info-list li:before {
+    content: "✓";
+    color: #4caf50;
+    font-weight: bold;
+}
+
+/* Info Card (Right Side) */
+.info-card {
+    background: white;
+    padding: 40px;
+    border-radius: 20px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+@media (max-width: 768px) {
+    .info-card {
+        padding: 25px;
+    }
+}
+
+@media (max-width: 480px) {
+    .info-card {
+        padding: 15px;
+        border-radius: 15px;
+    }
+}
+
+.info-card h3 {
+    color: #667eea;
+    font-size: 1.3rem;
+    margin: 0 0 20px 0;
+}
+
+.info-card ol {
+    margin: 0;
+    padding-left: 20px;
+    color: #666;
+    line-height: 1.8;
+}
+
+.info-card ol li {
+    margin: 12px 0;
+    font-size: 0.95rem;
+}
+
+.info-card ol li strong {
+    color: #667eea;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .quick-buttons {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+@media (max-width: 480px) {
+    .quick-buttons {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .info-row {
+        font-size: 0.85rem;
+    }
+
+    .info-card h3 {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+
+    .info-card ol li {
+        font-size: 0.85rem;
+        margin: 10px 0;
+    }
+}

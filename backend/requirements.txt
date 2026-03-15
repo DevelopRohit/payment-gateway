@@ -1,1 +1,6 @@
-flask flask_core mysql
+Flask
+flask-cors
+mysql-connector-python
+python-dotenv
+PyJWT
+Werkzeug
