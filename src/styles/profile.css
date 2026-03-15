@@ -1,0 +1,119 @@
+body{
+margin:0;
+font-family:Arial;
+background:linear-gradient(135deg,#0f172a,#1e293b);
+}
+
+
+/* container */
+
+.profile-container{
+
+display:flex;
+
+justify-content:center;
+align-items:center;
+
+height:100vh;
+
+}
+
+
+/* card */
+
+.profile-card{
+
+background:rgba(255,255,255,0.08);
+
+backdrop-filter:blur(20px);
+
+padding:40px;
+
+border-radius:20px;
+
+width:320px;
+
+text-align:center;
+
+color:white;
+
+box-shadow:0 10px 40px rgba(0,0,0,0.5);
+
+}
+
+
+/* image */
+
+.profile-card img{
+
+width:120px;
+
+height:120px;
+
+border-radius:50%;
+
+border:4px solid #38bdf8;
+
+margin-bottom:10px;
+
+}
+
+
+/* name */
+
+.profile-card h2{
+
+margin:10px 0;
+
+font-weight:600;
+
+}
+
+
+/* email */
+
+.profile-card p{
+
+color:#cbd5f5;
+
+margin-bottom:20px;
+
+}
+
+
+/* logout button */
+
+.logout-btn{
+
+width:100%;
+
+padding:12px;
+
+border:none;
+
+border-radius:10px;
+
+background:linear-gradient(
+90deg,
+#ef4444,
+#dc2626
+);
+
+color:white;
+
+font-weight:bold;
+
+cursor:pointer;
+
+transition:0.3s;
+
+}
+
+
+.logout-btn:hover{
+
+transform:scale(1.05);
+
+box-shadow:0 10px 25px rgba(239,68,68,0.4);
+
+}
