@@ -1,6 +1,5 @@
 from datetime import datetime, timedelta
 import os
-
 import jwt
 import mysql.connector
 from dotenv import load_dotenv
@@ -755,8 +754,12 @@ def add_money():
 
 
 if __name__ == "__main__":
-    app.run(
-        host=os.getenv("HOST", "0.0.0.0"),
-        port=int(os.getenv("PORT", "5000")),
-        debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
-    )
+    port = int(os.environ.get("PORT", 10000)) 
+    app.run(host="0.0.0.0", port=port)
+
+# if __name__ == "__main__":
+#     app.run(
+#         host=os.getenv("HOST", "0.0.0.0"),
+#         port=int(os.getenv("PORT", "5000")),
+#         debug=os.getenv("FLASK_DEBUG", "false").lower() == "true",
+#     )
