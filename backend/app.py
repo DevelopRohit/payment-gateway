@@ -18,10 +18,10 @@ cursor = None
 
 def build_allowed_origins():
     origins = {
+        "http://paymentgetwayindia.netlify.app",
         "http://localhost:5173",
         "http://127.0.0.1:5173",
         "http://localhost:3000",
-        "http://paymentgetwayindia.netlify.app",
     }
 
     extra_origins = os.getenv("CORS_ORIGINS", "")
@@ -35,7 +35,7 @@ def build_allowed_origins():
     return sorted(origins)
 
 
-CORS(app, origins=build_allowed_origins())
+CORS(app, origins="*")
 
 
 def get_db_config():
