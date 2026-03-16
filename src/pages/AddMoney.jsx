@@ -1,25 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api";
-// import { useAuth } from "../hooks/useAuth";
 import Toast from "../components/Toast";
+import { useAuth } from "../hooks/useAuth";
+import { formatCurrency } from "../utils/formatters";
 import "../styles/add-money.css";
 
 function AddMoney() {
-  const { user, token, updateUser } = useAuth();
+  const { token, user, updateUser } = useAuth();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
   const [errors, setErrors] = useState({});
-
   const [form, setForm] = useState({
     amount: "",
   });
-
-  if (!token) {
-    navigate("/");
-    return null;
-  }
 
   const quickAmounts = [100, 500, 1000, 2000, 5000, 10000];
 
@@ -28,60 +23,66 @@ function AddMoney() {
     setErrors({});
   };
 
-  const handleAmountChange = (e) => {
-    const value = e.target.value;
+  const handleAmountChange = (event) => {
+    const value = event.target.value;
     setForm({ amount: value });
+
     if (errors.amount) {
       setErrors({ ...errors, amount: "" });
     }
   };
 
-  const handleAddMoney = async (e) => {
-    e.preventDefault();
-    const newErrors = {};
+  const handleAddMoney = async (event) => {
+    event.preventDefault();
+    const nextErrors = {};
+    const parsedAmount = Number.parseInt(form.amount, 10);
 
     if (!form.amount.trim()) {
-      newErrors.amount = "Amount is required";
-    } else {
-      const amount = parseInt(form.amount);
-      if (isNaN(amount) || amount <= 0) {
-        newErrors.amount = "Amount must be a positive number";
-      } else if (amount > 100000) {
-        newErrors.amount = "Maximum limit is ₹100,000";
-      } else if (amount < 10) {
-        newErrors.amount = "Minimum amount is ₹10";
-      }
+      nextErrors.amount = "Amount is required";
+    } else if (!Number.isFinite(parsedAmount) || parsedAmount <= 0) {
+      nextErrors.amount = "Amount must be a positive number";
+    } else if (parsedAmount > 100000) {
+      nextErrors.amount = "Maximum limit is 100,000";
+    } else if (parsedAmount < 10) {
+      nextErrors.amount = "Minimum amount is 10";
     }
 
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
 
     setLoading(true);
-    try {
-      const res = await API.post(
-        "/add-money",
-        { amount: parseInt(form.amount) },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        },
-      );
 
-      if (res.data.user) {
-        updateUser(res.data.user);
-        setToast({
-          message: `✓ ₹${form.amount} added to your account successfully!`,
-          type: "success",
+    try {
+      if (!token) {
+        updateUser({
+          ...user,
+          balance: Number(user?.balance || 0) + parsedAmount,
         });
-        setForm({ amount: "" });
-        setTimeout(() => {
-          navigate("/profile");
-        }, 2000);
+      } else {
+        const response = await API.post("/add-money", {
+          amount: parsedAmount,
+        });
+
+        if (response.data.user) {
+          updateUser(response.data.user);
+        }
       }
-    } catch (err) {
+
       setToast({
-        message: err.response?.data?.error || "Failed to add money",
+        message: `${formatCurrency(parsedAmount)} added to your account.`,
+        type: "success",
+      });
+      setForm({ amount: "" });
+
+      setTimeout(() => {
+        navigate("/profile");
+      }, 1200);
+    } catch (error) {
+      setToast({
+        message: error.response?.data?.error || "Failed to add money.",
         type: "error",
       });
     } finally {
@@ -91,7 +92,7 @@ function AddMoney() {
 
   return (
     <div className="page">
-      <h2>💰 Add Money to Wallet</h2>
+      <h2>Add Money to Wallet</h2>
 
       {toast && (
         <Toast
@@ -103,34 +104,35 @@ function AddMoney() {
 
       <div className="add-money-container">
         <div className="add-money-card">
-          {/* Current Balance */}
           <div className="current-balance">
             <p className="balance-label">Current Balance</p>
             <div className="balance-display">
-              ₹{user?.balance?.toFixed(2) || "0.00"}
+              {formatCurrency(user?.balance || 0)}
             </div>
           </div>
 
-          {/* Quick Amount Selection */}
           <div className="quick-amounts">
-            <p className="quick-label">📱 Quick Select</p>
+            <p className="quick-label">Quick Select</p>
             <div className="quick-buttons">
               {quickAmounts.map((amount) => (
                 <button
                   key={amount}
+                  type="button"
                   className={`quick-btn ${form.amount === amount.toString() ? "active" : ""}`}
                   onClick={() => handleQuickAmount(amount)}
                 >
-                  ₹{amount}
+                  {formatCurrency(amount, {
+                    minimumFractionDigits: 0,
+                    maximumFractionDigits: 0,
+                  })}
                 </button>
               ))}
             </div>
           </div>
 
-          {/* Amount Form */}
           <form onSubmit={handleAddMoney}>
             <div className="form-group">
-              <label htmlFor="amount">Enter Amount (₹)</label>
+              <label htmlFor="amount">Enter Amount</label>
               <input
                 type="number"
                 id="amount"
@@ -144,32 +146,30 @@ function AddMoney() {
                   borderColor: errors.amount ? "#f44336" : "#e0e0e0",
                 }}
               />
-              {errors.amount && <p className="error-text">✗ {errors.amount}</p>}
+              {errors.amount && <p className="error-text">{errors.amount}</p>}
             </div>
 
-            {/* Amount Info */}
             {form.amount && !errors.amount && (
               <div className="amount-info">
                 <div className="info-row">
                   <span>Amount</span>
                   <span className="amount-value">
-                    ₹{parseInt(form.amount).toFixed(2)}
+                    {formatCurrency(form.amount)}
                   </span>
                 </div>
                 <div className="info-row">
                   <span>Fee</span>
-                  <span className="fee-value">FREE</span>
+                  <span className="fee-value">Free</span>
                 </div>
                 <div className="info-row total">
                   <span>Total Amount</span>
                   <span className="final-amount">
-                    ₹{parseInt(form.amount).toFixed(2)}
+                    {formatCurrency(form.amount)}
                   </span>
                 </div>
               </div>
             )}
 
-            {/* Submit Button */}
             <button
               type="submit"
               className="add-money-btn"
@@ -179,26 +179,24 @@ function AddMoney() {
             </button>
           </form>
 
-          {/* Info Box */}
           <div className="info-box">
-            <p className="info-icon">ℹ️</p>
+            <p className="info-icon">Info</p>
             <ul className="info-list">
-              <li>Minimum amount: ₹10</li>
-              <li>Maximum amount: ₹100,000</li>
+              <li>Minimum amount: 10</li>
+              <li>Maximum amount: 100,000</li>
               <li>Amount will be added instantly</li>
               <li>No charges or hidden fees</li>
             </ul>
           </div>
         </div>
 
-        {/* Balance Updates Info */}
         <div className="info-card">
-          <h3>🎯 How it Works</h3>
+          <h3>How It Works</h3>
           <ol>
             <li>Select or enter the amount you want to add</li>
-            <li>Click "Add Money Now" button</li>
+            <li>Click the Add Money Now button</li>
             <li>Your balance will be updated instantly</li>
-            <li>Transaction will be saved in your history</li>
+            <li>The transaction will be saved in your history</li>
           </ol>
         </div>
       </div>

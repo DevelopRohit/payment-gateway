@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../api";
 import Toast from "../components/Toast";
+import { formatCurrency, formatDate } from "../utils/formatters";
 
 function Transactions() {
   const [data, setData] = useState([]);
@@ -12,64 +13,88 @@ function Transactions() {
   const [toast, setToast] = useState(null);
 
   useEffect(() => {
+    let isActive = true;
+
     async function loadTransactions() {
       setLoading(true);
+
       try {
-        const res = await API.get("/transactions");
-        setData(res.data);
-        setFilteredData(res.data);
+        const response = await API.get("/transactions");
+        const items = Array.isArray(response.data) ? response.data : [];
+
+        if (!isActive) {
+          return;
+        }
+
+        setData(items);
+        setFilteredData(items);
         setError("");
-      } catch (err) {
-        console.error("Failed to load transactions:", err);
-        setError("Unable to load transactions. Check your connection.");
+      } catch (requestError) {
+        console.error("Failed to load transactions:", requestError);
+
+        if (isActive) {
+          setError("Unable to load transactions. Check your connection.");
+        }
       } finally {
-        setLoading(false);
+        if (isActive) {
+          setLoading(false);
+        }
       }
     }
 
     loadTransactions();
+
+    return () => {
+      isActive = false;
+    };
   }, []);
 
-  // Search and filter logic
   useEffect(() => {
     let filtered = data;
 
-    // Filter by type
     if (filterType !== "all") {
-      filtered = filtered.filter((t) => t.type === filterType);
+      filtered = filtered.filter((item) => item.type === filterType);
     }
 
-    // Search by mobile number or amount
     if (searchTerm.trim()) {
       filtered = filtered.filter(
-        (t) =>
-          t.mobile.includes(searchTerm) ||
-          t.amount.toString().includes(searchTerm),
+        (item) =>
+          item.mobile.includes(searchTerm) ||
+          item.amount.toString().includes(searchTerm),
       );
     }
 
     setFilteredData(filtered);
   }, [searchTerm, filterType, data]);
 
-  const handleCopyMobile = (mobile) => {
-    navigator.clipboard.writeText(mobile);
-    setToast({ message: "Mobile number copied!", type: "success" });
+  const handleCopyMobile = async (mobile) => {
+    try {
+      await navigator.clipboard.writeText(mobile);
+      setToast({ message: "Mobile number copied.", type: "success" });
+    } catch {
+      setToast({
+        message: "Copy failed. Please copy the number manually.",
+        type: "error",
+      });
+    }
   };
 
   const stats = {
     total: data.length,
-    recharges: data.filter((t) => t.type === "Recharge").length,
-    transfers: data.filter((t) => t.type === "Send Money").length,
-    totalAmount: data.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
+    recharges: data.filter((item) => item.type === "Recharge").length,
+    transfers: data.filter((item) => item.type === "Send Money").length,
+    totalAmount: data.reduce(
+      (sum, item) => sum + Number.parseFloat(item.amount || 0),
+      0,
+    ),
   };
 
   return (
     <div className="page">
-      <h2>📊 Transaction History</h2>
+      <h2>Transaction History</h2>
 
       {error && <div className="error">{error}</div>}
 
-      {/* Statistics */}
       {data.length > 0 && (
         <div className="dashboard-stats">
           <div className="stat-card">
@@ -78,7 +103,7 @@ function Transactions() {
           </div>
           <div className="stat-card">
             <h3>Total Amount</h3>
-            <div className="stat-value">Rs. {stats.totalAmount}</div>
+            <div className="stat-value">{formatCurrency(stats.totalAmount)}</div>
           </div>
           <div className="stat-card">
             <h3>Transfers</h3>
@@ -91,17 +116,16 @@ function Transactions() {
         </div>
       )}
 
-      {/* Search and Filter */}
       <div className="search-bar">
         <input
           type="text"
           placeholder="Search by mobile or amount..."
           value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          onChange={(event) => setSearchTerm(event.target.value)}
         />
         <select
           value={filterType}
-          onChange={(e) => setFilterType(e.target.value)}
+          onChange={(event) => setFilterType(event.target.value)}
           style={{ padding: "12px", margin: "10px 0" }}
         >
           <option value="all">All Types</option>
@@ -110,27 +134,26 @@ function Transactions() {
         </select>
       </div>
 
-      {/* Loading State */}
       {loading && <div className="spinner"></div>}
 
-      {/* No Data State */}
       {!loading && !error && filteredData.length === 0 && data.length === 0 && (
         <p style={{ textAlign: "center", color: "white", marginTop: "40px" }}>
-          📭 No transactions yet. Start by sending money or recharging!
+          No transactions yet. Start by sending money or recharging.
         </p>
       )}
 
-      {/* No Results State */}
       {!loading && !error && data.length > 0 && filteredData.length === 0 && (
         <p style={{ textAlign: "center", color: "white", marginTop: "40px" }}>
-          🔍 No transactions match your search.
+          No transactions match your search.
         </p>
       )}
 
-      {/* Transaction List */}
       {!loading &&
-        filteredData.map((t) => (
-          <div key={t.id} className="transaction-card">
+        filteredData.map((transaction) => (
+          <div
+            key={`${transaction.type}-${transaction.id}`}
+            className="transaction-card"
+          >
             <div
               style={{
                 display: "flex",
@@ -140,20 +163,20 @@ function Transactions() {
             >
               <div>
                 <span
-                  className={`transaction-badge ${t.type === "Recharge" ? "badge-recharge" : "badge-send"}`}
+                  className={`transaction-badge ${transaction.type === "Recharge" ? "badge-recharge" : "badge-send"}`}
                 >
-                  {t.type}
+                  {transaction.type}
                 </span>
               </div>
               <div style={{ color: "#999", fontSize: "0.9rem" }}>
-                ID: {t.id}
+                {formatDate(transaction.created_at)}
               </div>
             </div>
 
             <p>
-              <b>📱 Mobile:</b> {t.mobile}
+              <b>Mobile:</b> {transaction.mobile}
               <button
-                onClick={() => handleCopyMobile(t.mobile)}
+                onClick={() => handleCopyMobile(transaction.mobile)}
                 style={{
                   padding: "5px 10px",
                   marginLeft: "10px",
@@ -166,7 +189,7 @@ function Transactions() {
             </p>
 
             <p>
-              <b>💰 Amount:</b> Rs. {t.amount}
+              <b>Amount:</b> {formatCurrency(transaction.amount)}
             </p>
           </div>
         ))}

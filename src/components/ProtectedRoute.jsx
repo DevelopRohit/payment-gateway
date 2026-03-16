@@ -1,7 +1,15 @@
-// import { useAuth } from "../hooks/useAuth";
+import { useAuth } from "../hooks/useAuth";
 
 function ProtectedRoute({ children }) {
-  // useAuth();
+  const { loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="page">
+        <div className="spinner"></div>
+      </div>
+    );
+  }
 
   return children;
 }

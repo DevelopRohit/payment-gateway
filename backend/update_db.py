@@ -1,51 +1,65 @@
-import mysql.connector
+import os
 
-# Connect to database
+import mysql.connector
+from dotenv import load_dotenv
+
+load_dotenv()
+
 db = mysql.connector.connect(
-    host="localhost",
-    user="root",
-    password="Rohit@789",
-    database="payment_system"
+    host=os.getenv("DB_HOST", "localhost"),
+    user=os.getenv("DB_USER", "root"),
+    password=os.getenv("DB_PASSWORD", ""),
+    database=os.getenv("DB_NAME", "payment_system"),
 )
 
 cursor = db.cursor()
 
 try:
-    # Update password column to VARCHAR(255)
     cursor.execute("ALTER TABLE users MODIFY password VARCHAR(255)")
-    print("OK - Updated password column to VARCHAR(255)")
-except mysql.connector.Error as e:
-    print(f"Error modifying password: {e}")
+    print("Updated password column to VARCHAR(255)")
+except mysql.connector.Error as error:
+    print(f"Password column update skipped: {error}")
 
 try:
-    # Try to add phone column
     cursor.execute("ALTER TABLE users ADD COLUMN phone VARCHAR(10)")
-    print("OK - Added phone column")
-except mysql.connector.Error as e:
-    if "Duplicate column" in str(e):
+    print("Added phone column")
+except mysql.connector.Error as error:
+    if "Duplicate column" in str(error):
         print("Phone column already exists")
     else:
-        print(f"Error adding phone: {e}")
+        print(f"Phone column update skipped: {error}")
 
 try:
-    # Try to add created_at column
-    cursor.execute("ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
-    print("OK - Added created_at column")
-except mysql.connector.Error as e:
-    if "Duplicate column" in str(e):
+    cursor.execute(
+        "ALTER TABLE users ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP"
+    )
+    print("Added created_at column")
+except mysql.connector.Error as error:
+    if "Duplicate column" in str(error):
         print("created_at column already exists")
     else:
-        print(f"Error adding created_at: {e}")
+        print(f"created_at update skipped: {error}")
+
+try:
+    cursor.execute(
+        "ALTER TABLE users ADD COLUMN balance DECIMAL(10,2) NOT NULL DEFAULT 5000.00"
+    )
+    print("Added balance column")
+except mysql.connector.Error as error:
+    if "Duplicate column" in str(error):
+        print("Balance column already exists")
+    else:
+        print(f"Balance update skipped: {error}")
 
 db.commit()
 
-# Verify table structure
 cursor.execute("DESCRIBE users")
 columns = cursor.fetchall()
 print("\nCurrent table structure:")
-for col in columns:
-    print(f"  {col[0]}: {col[1]}")
+
+for column in columns:
+    print(f"  {column[0]}: {column[1]}")
 
 cursor.close()
 db.close()
-print("\nOK - Database schema update complete!")
+print("\nDatabase schema update complete")

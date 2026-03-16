@@ -1,16 +1,40 @@
-# React + Vite
+# Payment Gateway
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This project is a Vite React frontend with a Flask and MySQL backend.
 
-Currently, two official plugins are available:
+## Frontend setup
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+1. Copy `.env.example` to `.env`.
+2. Set `VITE_API_BASE_URL` to your backend URL.
+3. Install dependencies with `npm install`.
+4. Start the app with `npm run dev`.
 
-## React Compiler
+## Backend setup
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+1. Copy `backend/.env.example` to `backend/.env`.
+2. Fill in your MySQL connection details and a real `SECRET_KEY`.
+3. Install Python dependencies:
 
-## Expanding the ESLint configuration
+```bash
+pip install -r backend/requirements.txt
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+4. Start the API:
+
+```bash
+cd backend
+python app.py
+```
+
+## Production notes
+
+- Frontend build: `npm run build`
+- The frontend reads the backend URL from `VITE_API_BASE_URL`.
+- The backend reads database, port, host, secret, and CORS settings from `backend/.env`.
+- `public/_redirects` is included so SPA routes work on Netlify-style static hosting.
+
+## Verified locally
+
+- `npm run lint`
+- `npm run build`
+- `python -m py_compile backend/app.py backend/db.py backend/update_db.py`

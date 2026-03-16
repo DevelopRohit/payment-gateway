@@ -1,39 +1,34 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
 import API from "../api";
-// import { useAuth } from "../hooks/useAuth";
 import Toast from "../components/Toast";
+import { useAuth } from "../hooks/useAuth";
+import { formatCurrency, formatDate } from "../utils/formatters";
 import "../styles/profile.css";
 
 function Profile() {
-  const { user, token, logout } = useAuth();
-  const navigate = useNavigate();
+  const { token, updateUser, user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [toast, setToast] = useState(null);
   const [errors, setErrors] = useState({});
-
   const [profile, setProfile] = useState({
-    name: "",
-    email: "",
-    phone: "",
-    created_at: "",
-    balance: 0,
+    name: user?.name || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    created_at: user?.created_at || "",
+    balance: user?.balance || 0,
   });
-
   const [stats, setStats] = useState({
     send_transactions: 0,
     recharge_transactions: 0,
     total_sent: 0,
     total_recharged: 0,
   });
-
   const [editForm, setEditForm] = useState({
-    name: "",
-    phone: "",
+    name: user?.name || "",
+    phone: user?.phone || "",
   });
-
   const [passwordForm, setPasswordForm] = useState({
     old_password: "",
     new_password: "",
@@ -41,92 +36,144 @@ function Profile() {
   });
 
   useEffect(() => {
-    if (!token) {
-      navigate("/");
-      return;
-    }
-    fetchProfile();
-  }, [token, navigate]);
+    let isActive = true;
 
-  const fetchProfile = async () => {
-    try {
-      const res = await API.get("/profile", {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (res.data.user) {
-        setProfile(res.data.user);
-        setEditForm({
-          name: res.data.user.name,
-          phone: res.data.user.phone,
+    async function fetchProfile() {
+      if (!token) {
+        setProfile({
+          name: user?.name || "",
+          email: user?.email || "",
+          phone: user?.phone || "",
+          created_at: user?.created_at || "",
+          balance: user?.balance || 0,
         });
+        setEditForm({
+          name: user?.name || "",
+          phone: user?.phone || "",
+        });
+        setStats({
+          send_transactions: 0,
+          recharge_transactions: 0,
+          total_sent: 0,
+          total_recharged: 0,
+        });
+        setLoading(false);
+        return;
       }
 
-      if (res.data.stats) {
-        setStats(res.data.stats);
+      try {
+        const response = await API.get("/profile", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!isActive) {
+          return;
+        }
+
+        if (response.data.user) {
+          setProfile(response.data.user);
+          setEditForm({
+            name: response.data.user.name,
+            phone: response.data.user.phone || "",
+          });
+          updateUser(response.data.user);
+        }
+
+        if (response.data.stats) {
+          setStats(response.data.stats);
+        }
+      } catch {
+        if (isActive) {
+          setToast({ message: "Failed to load profile", type: "error" });
+        }
+      } finally {
+        if (isActive) {
+          setLoading(false);
+        }
       }
-    } catch (err) {
-      setToast({ message: "Failed to load profile", type: "error" });
-    } finally {
-      setLoading(false);
     }
-  };
+
+    fetchProfile();
+
+    return () => {
+      isActive = false;
+    };
+  }, [token, updateUser, user]);
 
   const handleUpdateProfile = async () => {
-    const newErrors = {};
+    const nextErrors = {};
 
     if (!editForm.name.trim()) {
-      newErrors.name = "Name is required";
+      nextErrors.name = "Name is required";
     } else if (editForm.name.trim().length < 3) {
-      newErrors.name = "Name must be at least 3 characters";
+      nextErrors.name = "Name must be at least 3 characters";
     }
 
     if (editForm.phone && !/^[0-9]{10}$/.test(editForm.phone)) {
-      newErrors.phone = "Phone must be 10 digits";
+      nextErrors.phone = "Phone must be 10 digits";
     }
 
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
 
     try {
-      await API.put("/profile", editForm, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      const updatedProfile = { ...profile, ...editForm };
 
-      setProfile({ ...profile, ...editForm });
+      if (token) {
+        await API.put("/profile", editForm, {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+      }
+
+      setProfile(updatedProfile);
+      updateUser(updatedProfile);
       setEditing(false);
       setToast({ message: "Profile updated successfully", type: "success" });
-    } catch (err) {
+    } catch (error) {
       setToast({
-        message: err.response?.data?.error || "Failed to update profile",
+        message: error.response?.data?.error || "Failed to update profile",
         type: "error",
       });
     }
   };
 
   const handleChangePassword = async () => {
-    const newErrors = {};
+    if (!token) {
+      setToast({
+        message: "Password settings are not available in guest mode.",
+        type: "error",
+      });
+      return;
+    }
+
+    const nextErrors = {};
 
     if (!passwordForm.old_password) {
-      newErrors.old_password = "Current password is required";
+      nextErrors.old_password = "Current password is required";
     }
 
     if (!passwordForm.new_password) {
-      newErrors.new_password = "New password is required";
+      nextErrors.new_password = "New password is required";
     } else if (passwordForm.new_password.length < 6) {
-      newErrors.new_password = "Password must be at least 6 characters";
+      nextErrors.new_password = "Password must be at least 6 characters";
     }
 
     if (passwordForm.new_password !== passwordForm.confirm_password) {
-      newErrors.confirm_password = "Passwords do not match";
+      nextErrors.confirm_password = "Passwords do not match";
     }
 
-    setErrors(newErrors);
-    if (Object.keys(newErrors).length > 0) return;
+    setErrors(nextErrors);
+
+    if (Object.keys(nextErrors).length > 0) {
+      return;
+    }
 
     try {
       await API.post(
@@ -149,20 +196,12 @@ function Profile() {
       });
       setShowPasswordForm(false);
       setToast({ message: "Password changed successfully", type: "success" });
-    } catch (err) {
+    } catch (error) {
       setToast({
-        message: err.response?.data?.error || "Failed to change password",
+        message: error.response?.data?.error || "Failed to change password",
         type: "error",
       });
     }
-  };
-
-  const handleLogout = () => {
-    logout();
-    setToast({ message: "Logged out successfully", type: "success" });
-    setTimeout(() => {
-      navigate("/");
-    }, 1500);
   };
 
   if (loading) {
@@ -175,10 +214,9 @@ function Profile() {
 
   return (
     <div className="page">
-      <h2>👤 My Profile</h2>
+      <h2>My Profile</h2>
 
       <div className="profile-container">
-        {/* Profile Header */}
         <div className="profile-header">
           <div className="profile-avatar">
             {profile.name?.charAt(0)?.toUpperCase() || "U"}
@@ -187,25 +225,22 @@ function Profile() {
             <h3>{profile.name}</h3>
             <p>{profile.email}</p>
             <p className="member-since">
-              Member since {new Date(profile.created_at).toLocaleDateString()}
+              Member since {formatDate(profile.created_at)}
             </p>
           </div>
           <div className="balance-card">
-            <p className="balance-label">💰 Account Balance</p>
+            <p className="balance-label">Account Balance</p>
             <div className="balance-amount">
-              ₹{profile.balance?.toFixed(2) || "0.00"}
+              {formatCurrency(profile.balance)}
             </div>
           </div>
-          <button className="logout-btn" onClick={handleLogout}>
-            🚪 Logout
-          </button>
+          {!token && <button className="logout-btn">Guest Account</button>}
         </div>
 
-        {/* Statistics */}
         <div className="dashboard-stats">
           <div className="stat-card">
             <h3>Money Transferred</h3>
-            <div className="stat-value">₹{stats.total_sent.toFixed(2)}</div>
+            <div className="stat-value">{formatCurrency(stats.total_sent)}</div>
             <p style={{ color: "#999", marginTop: "10px" }}>
               {stats.send_transactions} transactions
             </p>
@@ -214,7 +249,7 @@ function Profile() {
           <div className="stat-card">
             <h3>Recharges Done</h3>
             <div className="stat-value">
-              ₹{stats.total_recharged.toFixed(2)}
+              {formatCurrency(stats.total_recharged)}
             </div>
             <p style={{ color: "#999", marginTop: "10px" }}>
               {stats.recharge_transactions} transactions
@@ -230,10 +265,9 @@ function Profile() {
           </div>
         </div>
 
-        {/* Edit Profile Section */}
         <div className="profile-section">
           <div className="section-header">
-            <h3>📝 Account Details</h3>
+            <h3>Account Details</h3>
             {!editing && (
               <button className="edit-btn" onClick={() => setEditing(true)}>
                 Edit Profile
@@ -248,13 +282,15 @@ function Profile() {
                 <input
                   type="text"
                   value={editForm.name}
-                  onChange={(e) => {
-                    setEditForm({ ...editForm, name: e.target.value });
-                    if (errors.name) setErrors({ ...errors, name: "" });
+                  onChange={(event) => {
+                    setEditForm({ ...editForm, name: event.target.value });
+                    if (errors.name) {
+                      setErrors({ ...errors, name: "" });
+                    }
                   }}
                   style={{ borderColor: errors.name ? "#f44336" : "#e0e0e0" }}
                 />
-                {errors.name && <p className="error-text">✗ {errors.name}</p>}
+                {errors.name && <p className="error-text">{errors.name}</p>}
               </div>
 
               <div className="form-group">
@@ -262,15 +298,17 @@ function Profile() {
                 <input
                   type="tel"
                   value={editForm.phone}
-                  onChange={(e) => {
-                    setEditForm({ ...editForm, phone: e.target.value });
-                    if (errors.phone) setErrors({ ...errors, phone: "" });
+                  onChange={(event) => {
+                    setEditForm({ ...editForm, phone: event.target.value });
+                    if (errors.phone) {
+                      setErrors({ ...errors, phone: "" });
+                    }
                   }}
                   maxLength="10"
                   placeholder="10-digit number"
                   style={{ borderColor: errors.phone ? "#f44336" : "#e0e0e0" }}
                 />
-                {errors.phone && <p className="error-text">✗ {errors.phone}</p>}
+                {errors.phone && <p className="error-text">{errors.phone}</p>}
               </div>
 
               <div className="form-actions">
@@ -283,7 +321,7 @@ function Profile() {
                     setEditing(false);
                     setEditForm({
                       name: profile.name,
-                      phone: profile.phone,
+                      phone: profile.phone || "",
                     });
                     setErrors({});
                   }}
@@ -295,134 +333,138 @@ function Profile() {
           ) : (
             <div className="profile-details">
               <div className="detail-item">
-                <span className="detail-label">📧 Email</span>
+                <span className="detail-label">Email</span>
                 <span className="detail-value">{profile.email}</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">📱 Phone</span>
+                <span className="detail-label">Phone</span>
                 <span className="detail-value">
                   {profile.phone || "Not provided"}
                 </span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">📅 Joined</span>
+                <span className="detail-label">Joined</span>
                 <span className="detail-value">
-                  {new Date(profile.created_at).toLocaleDateString()}
+                  {formatDate(profile.created_at)}
                 </span>
               </div>
             </div>
           )}
         </div>
 
-        {/* Change Password Section */}
-        <div className="profile-section">
-          <div className="section-header">
-            <h3>🔒 Security</h3>
-            {!showPasswordForm && (
-              <button
-                className="edit-btn"
-                onClick={() => setShowPasswordForm(true)}
-              >
-                Change Password
-              </button>
+        {token && (
+          <div className="profile-section">
+            <div className="section-header">
+              <h3>Security</h3>
+              {!showPasswordForm && (
+                <button
+                  className="edit-btn"
+                  onClick={() => setShowPasswordForm(true)}
+                >
+                  Change Password
+                </button>
+              )}
+            </div>
+
+            {showPasswordForm && (
+              <div className="edit-form">
+                <div className="form-group">
+                  <label>Current Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.old_password}
+                    onChange={(event) => {
+                      setPasswordForm({
+                        ...passwordForm,
+                        old_password: event.target.value,
+                      });
+                      if (errors.old_password) {
+                        setErrors({ ...errors, old_password: "" });
+                      }
+                    }}
+                    placeholder="Enter current password"
+                    style={{
+                      borderColor: errors.old_password ? "#f44336" : "#e0e0e0",
+                    }}
+                  />
+                  {errors.old_password && (
+                    <p className="error-text">{errors.old_password}</p>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>New Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.new_password}
+                    onChange={(event) => {
+                      setPasswordForm({
+                        ...passwordForm,
+                        new_password: event.target.value,
+                      });
+                      if (errors.new_password) {
+                        setErrors({ ...errors, new_password: "" });
+                      }
+                    }}
+                    placeholder="Enter new password"
+                    style={{
+                      borderColor: errors.new_password ? "#f44336" : "#e0e0e0",
+                    }}
+                  />
+                  {errors.new_password && (
+                    <p className="error-text">{errors.new_password}</p>
+                  )}
+                </div>
+
+                <div className="form-group">
+                  <label>Confirm Password</label>
+                  <input
+                    type="password"
+                    value={passwordForm.confirm_password}
+                    onChange={(event) => {
+                      setPasswordForm({
+                        ...passwordForm,
+                        confirm_password: event.target.value,
+                      });
+                      if (errors.confirm_password) {
+                        setErrors({ ...errors, confirm_password: "" });
+                      }
+                    }}
+                    placeholder="Confirm new password"
+                    style={{
+                      borderColor: errors.confirm_password
+                        ? "#f44336"
+                        : "#e0e0e0",
+                    }}
+                  />
+                  {errors.confirm_password && (
+                    <p className="error-text">{errors.confirm_password}</p>
+                  )}
+                </div>
+
+                <div className="form-actions">
+                  <button className="save-btn" onClick={handleChangePassword}>
+                    Update Password
+                  </button>
+                  <button
+                    className="cancel-btn"
+                    onClick={() => {
+                      setShowPasswordForm(false);
+                      setPasswordForm({
+                        old_password: "",
+                        new_password: "",
+                        confirm_password: "",
+                      });
+                      setErrors({});
+                    }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
             )}
           </div>
-
-          {showPasswordForm && (
-            <div className="edit-form">
-              <div className="form-group">
-                <label>Current Password</label>
-                <input
-                  type="password"
-                  value={passwordForm.old_password}
-                  onChange={(e) => {
-                    setPasswordForm({
-                      ...passwordForm,
-                      old_password: e.target.value,
-                    });
-                    if (errors.old_password)
-                      setErrors({ ...errors, old_password: "" });
-                  }}
-                  placeholder="Enter current password"
-                  style={{
-                    borderColor: errors.old_password ? "#f44336" : "#e0e0e0",
-                  }}
-                />
-                {errors.old_password && (
-                  <p className="error-text">✗ {errors.old_password}</p>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label>New Password</label>
-                <input
-                  type="password"
-                  value={passwordForm.new_password}
-                  onChange={(e) => {
-                    setPasswordForm({
-                      ...passwordForm,
-                      new_password: e.target.value,
-                    });
-                    if (errors.new_password)
-                      setErrors({ ...errors, new_password: "" });
-                  }}
-                  placeholder="Enter new password"
-                  style={{
-                    borderColor: errors.new_password ? "#f44336" : "#e0e0e0",
-                  }}
-                />
-                {errors.new_password && (
-                  <p className="error-text">✗ {errors.new_password}</p>
-                )}
-              </div>
-
-              <div className="form-group">
-                <label>Confirm Password</label>
-                <input
-                  type="password"
-                  value={passwordForm.confirm_password}
-                  onChange={(e) => {
-                    setPasswordForm({
-                      ...passwordForm,
-                      confirm_password: e.target.value,
-                    });
-                    if (errors.confirm_password)
-                      setErrors({ ...errors, confirm_password: "" });
-                  }}
-                  placeholder="Confirm new password"
-                  style={{
-                    borderColor: errors.confirm_password
-                      ? "#f44336"
-                      : "#e0e0e0",
-                  }}
-                />
-                {errors.confirm_password && (
-                  <p className="error-text">✗ {errors.confirm_password}</p>
-                )}
-              </div>
-
-              <div className="form-actions">
-                <button className="save-btn" onClick={handleChangePassword}>
-                  Update Password
-                </button>
-                <button
-                  className="cancel-btn"
-                  onClick={() => {
-                    setShowPasswordForm(false);
-                    setPasswordForm({
-                      old_password: "",
-                      new_password: "",
-                      confirm_password: "",
-                    });
-                    setErrors({});
-                  }}
-                >
-                  Cancel
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+        )}
       </div>
 
       {toast && (

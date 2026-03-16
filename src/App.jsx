@@ -1,6 +1,5 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-
-// import { AuthProvider } from "./context/AuthContext";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { AuthProvider } from "./context/AuthContext";
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -15,12 +14,13 @@ import Transactions from "./pages/Transactions";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
 import Admin from "./pages/Admin";
+import NotFound from "./pages/NotFound";
 
 import "./styles/global.css";
 
 function App() {
   return (
-    // <AuthProvider>
+    <AuthProvider>
       <BrowserRouter>
         <Navbar />
 
@@ -105,11 +105,13 @@ function App() {
               </ProtectedRoute>
             }
           />
+
+          <Route path="*" element={<NotFound />} />
         </Routes>
 
         <Footer />
       </BrowserRouter>
-    // </AuthProvider>
+    </AuthProvider>
   );
 }
 

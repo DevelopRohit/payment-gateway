@@ -105,21 +105,6 @@
     transform: translateY(0);
 }
 
-/* Auth Links */
-.nav-auth-link {
-    background: rgba(255, 255, 255, 0.15);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-}
-
-.nav-auth-link:hover {
-    background: rgba(255, 255, 255, 0.25);
-    border-color: rgba(255, 255, 255, 0.5);
-}
-
-.nav-auth-link.register {
-    background: rgba(255, 255, 255, 0.2);
-}
-
 /* Add Money Link - Special Styling */
 .nav-add-money-link {
     background: rgba(76, 175, 80, 0.3);
@@ -147,24 +132,15 @@
     }
 }
 
-.nav-logout-btn {
+.nav-guest-badge {
     color: white;
     padding: 8px 16px;
-    border: 2px solid rgba(244, 67, 54, 0.5);
-    background: rgba(244, 67, 54, 0.1);
-    border-radius: 8px;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    font-weight: 500;
-    font-size: 0.95rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    font-size: 0.85rem;
+    font-weight: 600;
     white-space: nowrap;
-}
-
-.nav-logout-btn:hover {
-    background: rgba(244, 67, 54, 0.25);
-    border-color: rgba(244, 67, 54, 0.8);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(244, 67, 54, 0.4);
 }
 
 /* Responsive */

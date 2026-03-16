@@ -1,10 +1,21 @@
-import mysql.connector
+import os
 
-db = mysql.connector.connect(
-    host="gateway01.ap-southeast-1.prod.aws.tidbcloud.com",
-    user="4SH4E9PNTGGfHry.root",
-    password="11jBBKuhqgO0plgI",
-    database="payment_system"
-)
-# pip install -r requirements.txt
-cursor = db.cursor()
+import mysql.connector
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+def get_connection():
+    return mysql.connector.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        user=os.getenv("DB_USER", "root"),
+        password=os.getenv("DB_PASSWORD", ""),
+        database=os.getenv("DB_NAME", "payment_system"),
+    )
+
+
+if __name__ == "__main__":
+    connection = get_connection()
+    print("Database connection successful")
+    connection.close()
