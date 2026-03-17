@@ -13,12 +13,12 @@ function Navbar() {
       <div className="menu">
         <Link to="/">Home</Link>
         <Link to="/dashboard">Dashboard</Link>
-        <Link to="/add-money" className="nav-add-money-link">
-          Add Money
+        <Link to="/payments?action=add-money" className="nav-add-money-link">
+          Payments
         </Link>
-        <Link to="/send">Send</Link>
+        <Link to="/payments?action=send-money">Send</Link>
         <Link to="/qr">QR Pay</Link>
-        <Link to="/recharge">Recharge</Link>
+        <Link to="/payments?action=recharge">Recharge</Link>
         <Link to="/transactions">Transactions</Link>
         <Link to="/profile">Profile</Link>
         {user?.id === "guest" && <span className="nav-guest-badge">Guest Mode</span>}

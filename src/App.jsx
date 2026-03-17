@@ -10,6 +10,7 @@ import SendMoney from "./pages/SendMoney";
 import QRPayment from "./pages/QRPayment";
 import Recharge from "./pages/Recharge";
 import AddMoney from "./pages/AddMoney";
+import Payments from "./pages/Payments";
 import Transactions from "./pages/Transactions";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -66,6 +67,15 @@ function App() {
             element={
               <ProtectedRoute>
                 <AddMoney />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/payments"
+            element={
+              <ProtectedRoute>
+                <Payments />
               </ProtectedRoute>
             }
           />

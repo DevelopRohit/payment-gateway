@@ -161,6 +161,9 @@ function Dashboard() {
                         <p style={{ marginTop: "10px", color: "#666" }}>
                           Mobile: <b>{transaction.mobile}</b>
                         </p>
+                        <p style={{ marginTop: "6px", color: "#888" }}>
+                          Paid via <b>{transaction.payment_method || "Wallet"}</b>
+                        </p>
                       </div>
                       <div
                         style={{

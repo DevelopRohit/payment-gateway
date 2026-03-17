@@ -44,6 +44,11 @@ function Recharge() {
     setLoading(true);
     const parsedAmount = Number.parseFloat(amount);
 
+    function idGenerate() {
+      const rand = Math.floor(Math.random() * 900);
+      return rand;
+    }
+
     try {
       const response = await API.post("/recharge", {
         mobile: mobile.trim(),
@@ -167,7 +172,10 @@ function Recharge() {
             <p style={{ color: "#999", fontSize: "0.9rem" }}>
               Your mobile has been recharged successfully.
             </p>
-            <button onClick={() => setPopup(false)} style={{ marginTop: "20px" }}>
+            <button
+              onClick={() => setPopup(false)}
+              style={{ marginTop: "20px" }}
+            >
               Done
             </button>
           </div>

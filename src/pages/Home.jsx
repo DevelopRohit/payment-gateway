@@ -6,25 +6,31 @@ function Home() {
 
   const features = [
     {
-      icon: "💸",
-      title: "Send Money",
-      path: "/send",
-      description: "Transfer funds to any mobile number",
+      icon: "UPI",
+      title: "Add Money",
+      path: "/payments?action=add-money",
+      description: "Load wallet balance using card or UPI apps",
     },
     {
-      icon: "📱",
+      icon: "PAY",
+      title: "Send Money",
+      path: "/payments?action=send-money",
+      description: "Transfer funds using debit, credit or UPI",
+    },
+    {
+      icon: "QR",
       title: "QR Payment",
       path: "/qr",
       description: "Scan QR codes for quick payments",
     },
     {
-      icon: "📲",
+      icon: "TOP",
       title: "Recharge",
-      path: "/recharge",
-      description: "Top up mobile balance instantly",
+      path: "/payments?action=recharge",
+      description: "Recharge any number with card or UPI checkout",
     },
     {
-      icon: "📊",
+      icon: "LOG",
       title: "Transactions",
       path: "/transactions",
       description: "View all transaction history",
@@ -34,8 +40,10 @@ function Home() {
   return (
     <div className="page">
       <div className="home-header">
-        <h1>💳 Digital Payment Gateway</h1>
-        <p className="subtitle">Fast, Secure & Reliable Payments</p>
+        <h1>Digital Payment Gateway</h1>
+        <p className="subtitle">
+          Fast, secure and flexible payments with card and UPI checkout
+        </p>
       </div>
 
       <div className="cards">

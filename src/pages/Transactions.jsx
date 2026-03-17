@@ -57,10 +57,13 @@ function Transactions() {
     }
 
     if (searchTerm.trim()) {
+      const normalizedSearch = searchTerm.trim().toLowerCase();
+
       filtered = filtered.filter(
         (item) =>
           item.mobile.includes(searchTerm) ||
-          item.amount.toString().includes(searchTerm),
+          item.amount.toString().includes(searchTerm) ||
+          item.payment_method?.toLowerCase().includes(normalizedSearch),
       );
     }
 
@@ -119,7 +122,7 @@ function Transactions() {
       <div className="search-bar">
         <input
           type="text"
-          placeholder="Search by mobile or amount..."
+          placeholder="Search by mobile, amount or payment method..."
           value={searchTerm}
           onChange={(event) => setSearchTerm(event.target.value)}
         />
@@ -190,6 +193,10 @@ function Transactions() {
 
             <p>
               <b>Amount:</b> {formatCurrency(transaction.amount)}
+            </p>
+
+            <p>
+              <b>Payment Method:</b> {transaction.payment_method || "Wallet"}
             </p>
           </div>
         ))}

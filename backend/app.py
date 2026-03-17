@@ -11,6 +11,14 @@ load_dotenv()
 
 app = Flask(__name__)
 SECRET_KEY = os.getenv("SECRET_KEY", "change-this-secret")
+PAYMENT_METHOD_LABELS = {
+    "wallet": "Wallet",
+    "debit-card": "Debit Card",
+    "credit-card": "Credit Card",
+    "google-pay": "Google Pay",
+    "phonepe": "PhonePe",
+    "paytm": "Paytm",
+}
 
 db = None
 cursor = None
@@ -94,6 +102,7 @@ def init_db():
                 user_id INT NULL,
                 mobile VARCHAR(10) NOT NULL,
                 amount DECIMAL(10,2) NOT NULL,
+                payment_method VARCHAR(50) NOT NULL DEFAULT 'wallet',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
@@ -106,6 +115,7 @@ def init_db():
                 user_id INT NULL,
                 mobile VARCHAR(10) NOT NULL,
                 amount DECIMAL(10,2) NOT NULL,
+                payment_method VARCHAR(50) NOT NULL DEFAULT 'wallet',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
@@ -118,6 +128,7 @@ def init_db():
                 user_id INT NOT NULL,
                 amount DECIMAL(10,2) NOT NULL,
                 status VARCHAR(50) DEFAULT 'Success',
+                payment_method VARCHAR(50) NOT NULL DEFAULT 'debit-card',
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
             """
@@ -141,6 +152,11 @@ def init_db():
         ensure_column("transactions", "mobile", "mobile VARCHAR(10) NULL")
         ensure_column(
             "transactions",
+            "payment_method",
+            "payment_method VARCHAR(50) NOT NULL DEFAULT 'wallet'",
+        )
+        ensure_column(
+            "transactions",
             "created_at",
             "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
         )
@@ -158,10 +174,20 @@ def init_db():
         ensure_column("recharge", "user_id", "user_id INT NULL")
         ensure_column(
             "recharge",
+            "payment_method",
+            "payment_method VARCHAR(50) NOT NULL DEFAULT 'wallet'",
+        )
+        ensure_column(
+            "recharge",
             "created_at",
             "created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP",
         )
 
+        ensure_column(
+            "add_money",
+            "payment_method",
+            "payment_method VARCHAR(50) NOT NULL DEFAULT 'debit-card'",
+        )
         ensure_column(
             "add_money",
             "created_at",
@@ -279,13 +305,30 @@ def parse_amount(raw_amount, max_amount):
     return amount, None
 
 
+def parse_payment_method(raw_method, default_method="wallet"):
+    payment_method = (raw_method or default_method).strip().lower()
+
+    if payment_method not in PAYMENT_METHOD_LABELS:
+        return None, json_error("Unsupported payment method selected", 400)
+
+    return payment_method, None
+
+
+def format_payment_method(payment_method):
+    return PAYMENT_METHOD_LABELS.get(
+        (payment_method or "").strip().lower(),
+        PAYMENT_METHOD_LABELS["wallet"],
+    )
+
+
 def serialize_transaction(row, transaction_type):
-    created_at = row[3]
+    created_at = row[4]
 
     return {
         "id": row[0],
         "mobile": row[1],
         "amount": float(row[2] or 0),
+        "payment_method": format_payment_method(row[3]),
         "type": transaction_type,
         "created_at": created_at.isoformat() if created_at else None,
         "_sort_value": created_at or datetime.min,
@@ -549,7 +592,15 @@ def send_money():
     if auth_error:
         return auth_error
 
-    if user:
+    payment_method, method_error = parse_payment_method(
+        data.get("payment_method"),
+        default_method="wallet",
+    )
+
+    if method_error:
+        return method_error
+
+    if user and payment_method == "wallet":
         current_balance = float(user[4] or 0)
 
         if current_balance < amount:
@@ -557,10 +608,10 @@ def send_money():
 
         cursor.execute(
             """
-            INSERT INTO transactions (user_id, mobile, amount)
-            VALUES (%s, %s, %s)
+            INSERT INTO transactions (user_id, mobile, amount, payment_method)
+            VALUES (%s, %s, %s, %s)
             """,
-            (user[0], mobile, amount),
+            (user[0], mobile, amount, payment_method),
         )
         cursor.execute(
             "UPDATE users SET balance = balance - %s WHERE id = %s",
@@ -575,18 +626,53 @@ def send_money():
                 {
                     "message": "Payment Successful",
                     "user": serialize_user(updated_user),
+                    "payment_method": format_payment_method(payment_method),
+                }
+            ),
+            201,
+        )
+
+    if user:
+        cursor.execute(
+            """
+            INSERT INTO transactions (user_id, mobile, amount, payment_method)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (user[0], mobile, amount, payment_method),
+        )
+        db.commit()
+
+        refreshed_user = fetch_user(user[0])
+
+        return (
+            jsonify(
+                {
+                    "message": "Payment Successful",
+                    "user": serialize_user(refreshed_user),
+                    "payment_method": format_payment_method(payment_method),
                 }
             ),
             201,
         )
 
     cursor.execute(
-        "INSERT INTO transactions (mobile, amount) VALUES (%s, %s)",
-        (mobile, amount),
+        """
+        INSERT INTO transactions (mobile, amount, payment_method)
+        VALUES (%s, %s, %s)
+        """,
+        (mobile, amount, payment_method),
     )
     db.commit()
 
-    return jsonify({"message": "Payment Successful"}), 201
+    return (
+        jsonify(
+            {
+                "message": "Payment Successful",
+                "payment_method": format_payment_method(payment_method),
+            }
+        ),
+        201,
+    )
 
 
 @app.route("/recharge", methods=["POST"])
@@ -609,7 +695,15 @@ def recharge():
     if auth_error:
         return auth_error
 
-    if user:
+    payment_method, method_error = parse_payment_method(
+        data.get("payment_method"),
+        default_method="wallet",
+    )
+
+    if method_error:
+        return method_error
+
+    if user and payment_method == "wallet":
         current_balance = float(user[4] or 0)
 
         if current_balance < amount:
@@ -617,10 +711,10 @@ def recharge():
 
         cursor.execute(
             """
-            INSERT INTO recharge (user_id, mobile, amount)
-            VALUES (%s, %s, %s)
+            INSERT INTO recharge (user_id, mobile, amount, payment_method)
+            VALUES (%s, %s, %s, %s)
             """,
-            (user[0], mobile, amount),
+            (user[0], mobile, amount, payment_method),
         )
         cursor.execute(
             "UPDATE users SET balance = balance - %s WHERE id = %s",
@@ -635,18 +729,53 @@ def recharge():
                 {
                     "message": "Recharge Successful",
                     "user": serialize_user(updated_user),
+                    "payment_method": format_payment_method(payment_method),
+                }
+            ),
+            201,
+        )
+
+    if user:
+        cursor.execute(
+            """
+            INSERT INTO recharge (user_id, mobile, amount, payment_method)
+            VALUES (%s, %s, %s, %s)
+            """,
+            (user[0], mobile, amount, payment_method),
+        )
+        db.commit()
+
+        refreshed_user = fetch_user(user[0])
+
+        return (
+            jsonify(
+                {
+                    "message": "Recharge Successful",
+                    "user": serialize_user(refreshed_user),
+                    "payment_method": format_payment_method(payment_method),
                 }
             ),
             201,
         )
 
     cursor.execute(
-        "INSERT INTO recharge (mobile, amount) VALUES (%s, %s)",
-        (mobile, amount),
+        """
+        INSERT INTO recharge (mobile, amount, payment_method)
+        VALUES (%s, %s, %s)
+        """,
+        (mobile, amount, payment_method),
     )
     db.commit()
 
-    return jsonify({"message": "Recharge Successful"}), 201
+    return (
+        jsonify(
+            {
+                "message": "Recharge Successful",
+                "payment_method": format_payment_method(payment_method),
+            }
+        ),
+        201,
+    )
 
 
 @app.route("/transactions", methods=["GET"])
@@ -662,7 +791,7 @@ def transactions():
     if user:
         cursor.execute(
             """
-            SELECT id, mobile, amount, created_at
+            SELECT id, mobile, amount, payment_method, created_at
             FROM recharge
             WHERE user_id = %s
             ORDER BY created_at DESC, id DESC
@@ -673,7 +802,7 @@ def transactions():
 
         cursor.execute(
             """
-            SELECT id, mobile, amount, created_at
+            SELECT id, mobile, amount, payment_method, created_at
             FROM transactions
             WHERE user_id = %s
             ORDER BY created_at DESC, id DESC
@@ -684,7 +813,7 @@ def transactions():
     else:
         cursor.execute(
             """
-            SELECT id, mobile, amount, created_at
+            SELECT id, mobile, amount, payment_method, created_at
             FROM recharge
             ORDER BY created_at DESC, id DESC
             """
@@ -693,7 +822,7 @@ def transactions():
 
         cursor.execute(
             """
-            SELECT id, mobile, amount, created_at
+            SELECT id, mobile, amount, payment_method, created_at
             FROM transactions
             ORDER BY created_at DESC, id DESC
             """
@@ -728,16 +857,24 @@ def add_money():
     if parse_error:
         return parse_error
 
+    payment_method, method_error = parse_payment_method(
+        data.get("payment_method"),
+        default_method="debit-card",
+    )
+
+    if method_error:
+        return method_error
+
     cursor.execute(
         "UPDATE users SET balance = balance + %s WHERE id = %s",
         (amount, user[0]),
     )
     cursor.execute(
         """
-        INSERT INTO add_money (user_id, amount, status)
-        VALUES (%s, %s, %s)
+        INSERT INTO add_money (user_id, amount, status, payment_method)
+        VALUES (%s, %s, %s, %s)
         """,
-        (user[0], amount, "Success"),
+        (user[0], amount, "Success", payment_method),
     )
     db.commit()
 
@@ -748,6 +885,7 @@ def add_money():
             {
                 "message": "Money added successfully",
                 "user": serialize_user(updated_user),
+                "payment_method": format_payment_method(payment_method),
             }
         ),
         200,
