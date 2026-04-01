@@ -46,14 +46,24 @@ def build_allowed_origins():
 CORS(app, origins="*")
 
 
+# def get_db_config():
+#     return {
+#         "host": os.getenv("DB_HOST", "localhost"),
+#         "user": os.getenv("DB_USER", "root"),
+#         "password": os.getenv("DB_PASSWORD", ""),
+#         "database": os.getenv("DB_NAME", "payment_system"),
+#     }
+
+
 def get_db_config():
     return {
-        "host": os.getenv("DB_HOST", "localhost"),
-        "user": os.getenv("DB_USER", "root"),
-        "password": os.getenv("DB_PASSWORD", ""),
-        "database": os.getenv("DB_NAME", "payment_system"),
+        "host": os.getenv("DB_HOST"),
+        "user": os.getenv("DB_USER"),
+        "password": os.getenv("DB_PASSWORD"),
+        "database": os.getenv("DB_NAME"),
+        "port": 4000,
+        "ssl_disabled": False
     }
-
 
 def column_exists(table_name, column_name):
     cursor.execute(
@@ -846,7 +856,7 @@ def add_money():
     if not ensure_db():
         return json_error("Database connection failed", 500)
 
-    user, error = get_current_user(required=True)
+    user, error = get_current_user(required=False)
 
     if error:
         return error
