@@ -265,7 +265,7 @@ def fetch_login_user(email):
     return cursor.fetchone()
 
 
-def get_auth_payload(required=True):
+def get_auth_payload(required=False):
     auth_header = request.headers.get("Authorization", "")
 
     if not auth_header.startswith("Bearer "):
